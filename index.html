@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIWAM IoT Web App Platform</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent body scroll, content scrolls within main */
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .dark ::-webkit-scrollbar-track {
+            background: #333;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #555;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #777;
+        }
+        /* Pages hidden by default */
+        .page-content {
+            display: none;
+        }
+        .page-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+
+    <!-- Message Box Component (Simplified for static) -->
+    <div id="message-box" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 hidden">
+        <div class="rounded-lg shadow-xl p-6 max-w-sm w-full bg-blue-100 border border-blue-500 text-blue-700">
+            <p id="message-text" class="text-lg font-semibold mb-4"></p>
+            <div class="flex justify-end space-x-2">
+                <button onclick="hideMessageBox()" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition duration-200">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application Layout -->
+    <div class="flex flex-col h-screen">
+        <header class="bg-white dark:bg-gray-800 shadow-md p-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-blue-600 dark:text-blue-400">SIWAM Dashboard</h1>
+            <div class="flex items-center space-x-4">
+                <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-200" title="Toggle Theme">
+                    🌙
+                </button>
+                <span class="text-sm font-medium">Hello, User!</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400">User ID: static-user-id</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400">App ID: static-app-id</span>
+            </div>
+        </header>
+
+        <div class="flex flex-1 overflow-hidden">
+            <!-- Sidebar Navigation -->
+            <nav class="w-64 bg-white dark:bg-gray-800 shadow-lg p-4 space-y-2 flex-shrink-0 overflow-y-auto">
+                <button onclick="navigateTo('dashboard')" class="w-full text-left p-3 rounded-lg text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900 hover:bg-blue-100 dark:hover:bg-blue-700 font-semibold transition duration-200">
+                    Dashboard
+                </button>
+                <button onclick="navigateTo('devices')" class="w-full text-left p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition duration-200">
+                    Devices
+                </button>
+                <button onclick="navigateTo('sensordata')" class="w-full text-left p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition duration-200">
+                    Sensor Data
+                </button>
+                <button onclick="navigateTo('valvedata')" class="w-full text-left p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition duration-200">
+                    Valve Data
+                </button>
+                <button onclick="navigateTo('wtpmonitoring')" class="w-full text-left p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition duration-200">
+                    WTP Monitoring
+                </button>
+                <button onclick="navigateTo('gisplaceholder')" class="w-full text-left p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition duration-200">
+                    GIS Map
+                </button>
+                <button onclick="navigateTo('configuration')" class="w-full text-left p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition duration-200">
+                    Configuration
+                </button>
+                <button onclick="navigateTo('profile')" class="w-full text-left p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition duration-200">
+                    My Profile
+                </button>
+                <button onclick="navigateTo('admin')" class="w-full text-left p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition duration-200">
+                    Admin
+                </button>
+                <button onclick="showMessageBox('Logout functionality is not available in static HTML.','info')" class="w-full text-left p-3 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-700 transition duration-200">
+                    Logout
+                </button>
+            </nav>
+
+            <!-- Main Content Area -->
+            <main class="flex-1 p-6 overflow-y-auto">
+                <!-- Dashboard Page -->
+                <div id="dashboard-page" class="page-content active">
+                    <section class="mb-8">
+                        <h2 class="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-200">Key Performance Indicators</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div class="rounded-xl shadow-lg p-6 flex items-center space-x-4 transform transition-transform duration-300 hover:scale-105 bg-red-500 text-white">
+                                <span class="text-4xl">📊</span>
+                                <div>
+                                    <h3 class="text-lg font-semibold">UFW/NRW Reduction</h3>
+                                    <p class="text-3xl font-extrabold">15%</p>
+                                </div>
+                            </div>
+                            <div class="rounded-xl shadow-lg p-6 flex items-center space-x-4 transform transition-transform duration-300 hover:scale-105 bg-green-500 text-white">
+                                <span class="text-4xl">⚙️</span>
+                                <div>
+                                    <h3 class="text-lg font-semibold">Operational Efficiency</h3>
+                                    <p class="text-3xl font-extrabold">92%</p>
+                                </div>
+                            </div>
+                            <div class="rounded-xl shadow-lg p-6 flex items-center space-x-4 transform transition-transform duration-300 hover:scale-105 bg-blue-500 text-white">
+                                <span class="text-4xl">💧</span>
+                                <div>
+                                    <h3 class="text-lg font-semibold">Equitable Distribution</h3>
+                                    <p class="text-3xl font-extrabold">88%</p>
+                                </div>
+                            </div>
+                            <div class="rounded-xl shadow-lg p-6 flex items-center space-x-4 transform transition-transform duration-300 hover:scale-105 bg-purple-500 text-white">
+                                <span class="text-4xl">📡</span>
+                                <div>
+                                    <h3 class="text-lg font-semibold">Active Sensors</h3>
+                                    <p class="text-3xl font-extrabold">75/100</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <section>
+                        <h2 class="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-200">System Overview</h2>
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                            <p class="text-gray-700 dark:text-gray-300 mb-4">
+                                Welcome to the Smart Integrated Water & Asset Management (SIWAM) platform.
+                                This dashboard provides a comprehensive overview of your water utility operations,
+                                helping to monitor IoT data, manage assets, and ensure equitable water distribution.
+                            </p>
+                            <p class="text-gray-700 dark:text-gray-300">
+                                Navigate using the sidebar to access detailed information on devices, sensor readings,
+                                valve operations, Water Treatment Plant (WTP) monitoring, and more.
+                            </p>
+                            <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900 rounded-lg border border-blue-200 dark:border-blue-700">
+                                <h3 class="font-semibold text-blue-800 dark:text-blue-200 mb-2">Important Note on Features:</h3>
+                                <ul class="list-disc list-inside text-blue-700 dark:text-blue-300">
+                                  <li>GIS integration and AI Hydraulic Modelling are represented by placeholders.</li>
+                                  <li>Real-time data is simulated for demonstration purposes.</li>
+                                  <li>Authentication is handled automatically by the environment for demo purposes.</li>
+                                  <li>All data is stored in Firestore, adapting from the document's MongoDB mention.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Profile Page -->
+                <div id="profile-page" class="page-content">
+                    <div class="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+                        <h2 class="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-200">My Profile</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email:</label>
+                                <p class="mt-1 text-lg text-gray-900 dark:text-gray-100">user@example.com</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Role:</label>
+                                <p class="mt-1 text-lg text-gray-900 dark:text-gray-100">Operator</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tenant ID:</label>
+                                <p class="mt-1 text-lg text-gray-900 dark:text-gray-100">ilonnati-innovations-tenant</p>
+                            </div>
+                            <div class="flex space-x-4 mt-6">
+                                <button onclick="showMessageBox('Editing is not available in static HTML.','info')" class="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-200">
+                                    Edit Profile
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Devices Page -->
+                <div id="devices-page" class="page-content">
+                    <div class="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+                        <h2 class="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-200">Device Management</h2>
+
+                        <!-- Add New Device Form (Static) -->
+                        <div class="mb-8 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner">
+                            <h3 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Add New Device</h3>
+                            <form onsubmit="showMessageBox('Adding devices is not available in static HTML.','info'); return false;" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="new-device-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
+                                    <input type="text" id="new-device-name" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" placeholder="e.g., Main Pump 1">
+                                </div>
+                                <div>
+                                    <label for="new-device-type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Type</label>
+                                    <select id="new-device-type" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+                                        <option value="pressure">Pressure Sensor</option>
+                                        <option value="flow">Flow Sensor</option>
+                                        <option value="water_quality">Water Quality Sensor</option>
+                                        <option value="valve">Valve</option>
+                                        <option value="pump">Pump</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="new-device-location" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
+                                    <input type="text" id="new-device-location" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" placeholder="e.g., Zone A, Sector 3">
+                                </div>
+                                <div>
+                                    <label for="new-device-unit" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Unit (e.g., psi, LPM)</label>
+                                    <input type="text" id="new-device-unit" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" placeholder="e.g., psi">
+                                </div>
+                                <div>
+                                    <label for="new-device-min-threshold" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Min Threshold</label>
+                                    <input type="number" id="new-device-min-threshold" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" placeholder="e.g., 30">
+                                </div>
+                                <div>
+                                    <label for="new-device-max-threshold" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Max Threshold</label>
+                                    <input type="number" id="new-device-max-threshold" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" placeholder="e.g., 60">
+                                </div>
+                                <div class="md:col-span-2 flex justify-end">
+                                    <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-200">
+                                        Add Device
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Device List (Static) -->
+                        <h3 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Existing Devices</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 rounded-lg overflow-hidden">
+                                <thead class="bg-gray-100 dark:bg-gray-700">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Location</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Unit</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Thresholds</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">Pressure Sensor 1</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">pressure</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">Zone A, Node 1</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">psi</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">30 - 60</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">active</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button onclick="showMessageBox('Editing is not available in static HTML.','info')" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-2">Edit</button>
+                                            <button onclick="showMessageBox('Deleting is not available in static HTML.','info')" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">Flow Sensor 2</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">flow</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">Zone B, Node 5</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">LPM</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">100 - 500</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">alert</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button onclick="showMessageBox('Editing is not available in static HTML.','info')" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-2">Edit</button>
+                                            <button onclick="showMessageBox('Deleting is not available in static HTML.','info')" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">Main Valve 1</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">valve</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">WTP Outlet</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">N/A</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">N/A</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">open</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button onclick="showMessageBox('Editing is not available in static HTML.','info')" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-2">Edit</button>
+                                            <button onclick="showMessageBox('Deleting is not available in static HTML.','info')" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">Delete</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sensor Data Page -->
+                <div id="sensordata-page" class="page-content">
+                    <div class="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+                        <h2 class="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-200">Sensor Data Monitoring</h2>
+
+                        <div class="mb-6">
+                            <label for="sensor-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Sensor:</label>
+                            <select id="sensor-select" class="block w-full md:w-1/2 lg:w-1/3 rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-2">
+                                <option value="">-- Select a sensor --</option>
+                                <option value="pressure1">Pressure Sensor 1 (Zone A, Node 1)</option>
+                                <option value="flow2">Flow Sensor 2 (Zone B, Node 5)</option>
+                                <option value="waterquality3">Water Quality Sensor 3 (Treatment Plant)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-8 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner">
+                            <h3 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Current Sensor Status: Pressure Sensor 1</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-gray-700 dark:text-gray-300">
+                                <p><strong>Type:</strong> Pressure Sensor</p>
+                                <p><strong>Location:</strong> Zone A, Node 1</p>
+                                <p><strong>Unit:</strong> psi</p>
+                                <p><strong>Min Threshold:</strong> 30 psi</p>
+                                <p><strong>Max Threshold:</strong> 60 psi</p>
+                                <p>
+                                    <strong>Current Value:</strong>
+                                    <span class="ml-2 text-xl font-bold text-green-600">45.2 psi</span>
+                                </p>
+                                <p>
+                                    <strong>Status:</strong>
+                                    <span class="ml-2 px-2 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">active</span>
+                                </p>
+                                <p><strong>Last Updated:</strong> 2025-07-12 12:00:00</p>
+                            </div>
+                        </div>
+
+                        <h3 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Historical Readings</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 rounded-lg overflow-hidden">
+                                <thead class="bg-gray-100 dark:bg-gray-700">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Timestamp</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Value</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">2025-07-12 11:55:00</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">44.8 psi</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">active</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">2025-07-12 11:50:00</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">45.5 psi</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">active</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">2025-07-12 11:45:00</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">62.1 psi</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">alert</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Valve Data Page -->
+                <div id="valvedata-page" class="page-content">
+                    <div class="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+                        <h2 class="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-200">Valve Data & Control</h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg shadow-md p-6 flex flex-col justify-between">
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-200">Main Valve 1</h3>
+                                    <p class="text-gray-700 dark:text-gray-300 text-sm mb-1"><strong>Location:</strong> WTP Outlet</p>
+                                    <p class="text-gray-700 dark:text-gray-300 text-sm mb-1"><strong>Type:</strong> valve</p>
+                                    <p class="text-gray-700 dark:text-gray-300 text-sm mb-1"><strong>Last Updated:</strong> 2025-07-12 11:58:00</p>
+                                    <p class="text-lg font-bold mt-3">
+                                        Status:
+                                        <span class="ml-2 px-3 py-1 rounded-full text-white bg-green-500">open</span>
+                                    </p>
+                                </div>
+                                <div class="mt-4">
+                                    <button onclick="showMessageBox('Valve control is not available in static HTML.','info')" class="w-full py-2 rounded-md font-semibold transition duration-200 bg-red-600 hover:bg-red-700 text-white">
+                                        Close Valve
+                                    </button>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">Manual override option</p>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg shadow-md p-6 flex flex-col justify-between">
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-200">Zone B Valve</h3>
+                                    <p class="text-gray-700 dark:text-gray-300 text-sm mb-1"><strong>Location:</strong> Zone B Distribution</p>
+                                    <p class="text-gray-700 dark:text-gray-300 text-sm mb-1"><strong>Type:</strong> valve</p>
+                                    <p class="text-gray-700 dark:text-gray-300 text-sm mb-1"><strong>Last Updated:</strong> 2025-07-12 11:50:00</p>
+                                    <p class="text-lg font-bold mt-3">
+                                        Status:
+                                        <span class="ml-2 px-3 py-1 rounded-full text-white bg-red-500">closed</span>
+                                    </p>
+                                </div>
+                                <div class="mt-4">
+                                    <button onclick="showMessageBox('Valve control is not available in static HTML.','info')" class="w-full py-2 rounded-md font-semibold transition duration-200 bg-green-600 hover:bg-green-700 text-white">
+                                        Open Valve
+                                    </button>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">Manual override option</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- WTP Monitoring Page -->
+                <div id="wtpmonitoring-page" class="page-content">
+                    <div class="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+                        <h2 class="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-200">Water Treatment Plant (WTP) Monitoring</h2>
+
+                        <div class="space-y-8">
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner p-6">
+                                <h3 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Raw Water Pumping Station</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Reservoir Level</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">75% <span class="text-base font-normal text-gray-500 dark:text-gray-400"></span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Pump Discharge</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">1500 <span class="text-base font-normal text-gray-500 dark:text-gray-400">LPM</span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Energy Consumption</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">250 <span class="text-base font-normal text-gray-500 dark:text-gray-400">kWh</span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Pump Status</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">Running <span class="text-base font-normal text-gray-500 dark:text-gray-400"></span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Header Pressure</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">50 <span class="text-base font-normal text-gray-500 dark:text-gray-400">psi</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner p-6">
+                                <h3 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">WTP Aerator/Stilling Chamber</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Inlet Discharge</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">1450 <span class="text-base font-normal text-gray-500 dark:text-gray-400">LPM</span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Turbidity</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">15 <span class="text-base font-normal text-gray-500 dark:text-gray-400">NTU</span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">pH</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">7.2 <span class="text-base font-normal text-gray-500 dark:text-gray-400"></span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Pre-chlorination Dosage</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">1.2 <span class="text-base font-normal text-gray-500 dark:text-gray-400">mg/L</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner p-6">
+                                <h3 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Clariflocculator (CFL)</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Effluent pH</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">7.0 <span class="text-base font-normal text-gray-500 dark:text-gray-400"></span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Effluent Turbidity</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">2 <span class="text-base font-normal text-gray-500 dark:text-gray-400">NTU</span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Residual Chlorine</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">0.1 <span class="text-base font-normal text-gray-500 dark:text-gray-400">mg/L</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner p-6">
+                                <h3 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Filter Beds</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Discharge</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">1400 <span class="text-base font-normal text-gray-500 dark:text-gray-400">LPM</span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Turbidity</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">0.5 <span class="text-base font-normal text-gray-500 dark:text-gray-400">NTU</span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Head Loss</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">1.5 <span class="text-base font-normal text-gray-500 dark:text-gray-400">m</span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Residual Chlorine</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">0.2 <span class="text-base font-normal text-gray-500 dark:text-gray-400">mg/L</span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Post-chlorination Dosage</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">0.8 <span class="text-base font-normal text-gray-500 dark:text-gray-400">mg/L</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner p-6">
+                                <h3 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Clear Water Sump</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Residual Chlorine</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">0.5 <span class="text-base font-normal text-gray-500 dark:text-gray-400">mg/L</span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">pH</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">7.5 <span class="text-base font-normal text-gray-500 dark:text-gray-400"></span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Turbidity</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">0.3 <span class="text-base font-normal text-gray-500 dark:text-gray-400">NTU</span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Sump Water Level</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">90% <span class="text-base font-normal text-gray-500 dark:text-gray-400"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner p-6">
+                                <h3 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Clear Water Pump Houses</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Pump Discharge</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">1300 <span class="text-base font-normal text-gray-500 dark:text-gray-400">LPM</span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Header Pressure</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">60 <span class="text-base font-normal text-gray-500 dark:text-gray-400">psi</span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Energy Consumption</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">220 <span class="text-base font-normal text-gray-500 dark:text-gray-400">kWh</span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Pump Status</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">Running <span class="text-base font-normal text-gray-500 dark:text-gray-400"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner p-6">
+                                <h3 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">OHSR at Habitations</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Inlet Discharge</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">200 <span class="text-base font-normal text-gray-500 dark:text-gray-400">LPM</span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Tank Water Level</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">85% <span class="text-base font-normal text-gray-500 dark:text-gray-400"></span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Residual Chlorine</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">0.4 <span class="text-base font-normal text-gray-500 dark:text-gray-400">mg/L</span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Turbidity</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">0.4 <span class="text-base font-normal text-gray-500 dark:text-gray-400">NTU</span></p>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-gray-800 rounded-md shadow-sm">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">pH</p>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">7.3 <span class="text-base font-normal text-gray-500 dark:text-gray-400"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GIS Map Placeholder Page -->
+                <div id="gisplaceholder-page" class="page-content">
+                    <div class="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg flex flex-col items-center justify-center min-h-[500px]">
+                        <h2 class="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-200">GIS Map Visualization</h2>
+                        <div class="w-full h-96 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 text-center text-xl italic border-2 border-dashed border-gray-400 dark:border-gray-600">
+                            <p>
+                                GIS Map Placeholder<br>
+                                (Integration with KML/KMZ, Shapefiles, Google Maps/Earth would be here)
+                                <br><br>
+                                This section would display water networks, supply pockets, valve locations,
+                                and real-time data overlays for equitable distribution and leak detection.
+                            </p>
+                        </div>
+                        <p class="mt-4 text-gray-600 dark:text-gray-400">
+                            Advanced variants would include clickable elements for details and time-series behavior,
+                            and inequity analytics highlighting undersupplied/oversupplied pockets.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Configuration Page -->
+                <div id="configuration-page" class="page-content">
+                    <div class="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+                        <h2 class="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-200">Configuration Settings</h2>
+
+                        <div class="mb-8 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner">
+                            <h3 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Service Level Management (SLM)</h3>
+                            <p class="text-gray-700 dark:text-gray-300 mb-4">
+                                Configure node-level Service Level Agreements (SLAs) for pressure and flow thresholds.
+                            </p>
+                            <form onsubmit="showMessageBox('Saving SLM Configuration is not available in static HTML.','info'); return false;" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="slm-nodeId" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Node ID</label>
+                                    <input type="text" id="slm-nodeId" value="node-001" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+                                </div>
+                                <div>
+                                    <label for="slm-pressureMin" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Pressure Min (psi)</label>
+                                    <input type="number" id="slm-pressureMin" value="35" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+                                </div>
+                                <div>
+                                    <label for="slm-pressureMax" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Pressure Max (psi)</label>
+                                    <input type="number" id="slm-pressureMax" value="55" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+                                </div>
+                                <div>
+                                    <label for="slm-flowMin" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Flow Min (LPM)</label>
+                                    <input type="number" id="slm-flowMin" value="100" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+                                </div>
+                                <div>
+                                    <label for="slm-flowMax" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Flow Max (LPM)</label>
+                                    <input type="number" id="slm-flowMax" value="500" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+                                </div>
+                                <div class="md:col-span-2 flex justify-end">
+                                    <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-200">
+                                        Save SLM Configuration
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="p-6 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner">
+                            <h3 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Other Settings (Placeholder)</h3>
+                            <p class="text-gray-700 dark:text-gray-300">
+                                This section would contain other system-wide configuration options,
+                                such as data retention policies, notification preferences, and integration settings.
+                            </p>
+                            <p class="text-gray-700 dark:text-gray-300 mt-2">
+                                Customizable dashboard themes based on client logo colors would be implemented here
+                                using dynamic CSS variable updates.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Page -->
+                <div id="admin-page" class="page-content">
+                    <div class="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+                        <h2 class="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-200">Admin Panel</h2>
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner p-6">
+                            <p class="text-gray-700 dark:text-gray-300 mb-4">
+                                This is a placeholder for the Admin interface.
+                                Here, administrators would manage users, roles, tenants, and system-wide SLM configurations.
+                            </p>
+                            <p class="text-gray-700 dark:text-gray-300">
+                                Current User ID (for context): <span class="font-mono text-blue-600 dark:text-blue-400 break-all">static-admin-user-id</span>
+                            </p>
+                            <ul class="list-disc list-inside text-gray-700 dark:text-gray-300 mt-4">
+                                <li>User Management: Add, edit, delete users; assign roles.</li>
+                                <li>Tenant Management: Create, configure, and manage tenant environments.</li>
+                                <li>System-wide SLM templates and defaults.</li>
+                                <li>Audit logs and system health monitoring.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Theme Toggle
+        document.getElementById('theme-toggle').addEventListener('click', function() {
+            document.documentElement.classList.toggle('dark');
+            const currentTheme = document.documentElement.classList.contains('dark') ? '☀️' : '🌙';
+            this.textContent = currentTheme;
+        });
+
+        // Navigation Logic
+        function navigateTo(pageId) {
+            const pages = document.querySelectorAll('.page-content');
+            pages.forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageId + '-page').classList.add('active');
+
+            // Update active state in sidebar
+            const navButtons = document.querySelectorAll('nav button');
+            navButtons.forEach(button => {
+                button.classList.remove('text-blue-600', 'dark:text-blue-400', 'bg-blue-50', 'dark:bg-blue-900', 'font-semibold');
+                button.classList.add('text-gray-700', 'dark:text-gray-300', 'hover:bg-gray-200', 'dark:hover:bg-gray-700');
+            });
+            const activeButton = document.querySelector(`button[onclick="navigateTo('${pageId}')"]`);
+            if (activeButton) {
+                activeButton.classList.add('text-blue-600', 'dark:text-blue-400', 'bg-blue-50', 'dark:bg-blue-900', 'font-semibold');
+                activeButton.classList.remove('text-gray-700', 'dark:text-gray-300', 'hover:bg-gray-200', 'dark:hover:bg-gray-700');
+            }
+        }
+
+        // Message Box Functions
+        function showMessageBox(message, type = 'info') {
+            const msgBox = document.getElementById('message-box');
+            const msgText = document.getElementById('message-text');
+            msgText.textContent = message;
+
+            // Reset classes
+            msgBox.querySelector('.rounded-lg').classList.remove('bg-red-100', 'border-red-400', 'text-red-700', 'bg-green-100', 'border-green-400', 'text-green-700', 'bg-blue-100', 'border-blue-400', 'text-blue-700');
+            msgBox.querySelector('.rounded-lg').classList.remove('border-red-500', 'border-green-500', 'border-blue-500');
+
+            // Apply new classes based on type
+            if (type === 'error') {
+                msgBox.querySelector('.rounded-lg').classList.add('bg-red-100', 'border-red-400', 'text-red-700', 'border-red-500');
+            } else if (type === 'success') {
+                msgBox.querySelector('.rounded-lg').classList.add('bg-green-100', 'border-green-400', 'text-green-700', 'border-green-500');
+            } else {
+                msgBox.querySelector('.rounded-lg').classList.add('bg-blue-100', 'border-blue-400', 'text-blue-700', 'border-blue-500');
+            }
+
+            msgBox.classList.remove('hidden');
+        }
+
+        function hideMessageBox() {
+            document.getElementById('message-box').classList.add('hidden');
+        }
+
+        // Initialize with dashboard active and correct sidebar styling
+        document.addEventListener('DOMContentLoaded', () => {
+            navigateTo('dashboard');
+        });
+    </script>
+</body>
+</html>
